@@ -21,5 +21,10 @@
     <string name="AIText">----</string>
     <string name="connect">Connect</string>
     <string name="loading">Refreshing......</string>
+    <string name="title_activity_controller">Controller</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="left_control">Left</string>
+    <string name="right_control">Right</string>
+    <string name="up_control">Up</string>
 
 </resources>
