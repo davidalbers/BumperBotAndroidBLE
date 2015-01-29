@@ -126,6 +126,8 @@ public class ControllerActivity extends Activity {
 			finish();
 			return;
 		}
+		
+		disableButtons();
 
 		Intent gattServiceIntent = new Intent(ControllerActivity.this,
 				RBLService.class);
@@ -282,6 +284,10 @@ public class ControllerActivity extends Activity {
 				@Override
 				public void run() {
 					if (mDevice != null) {
+						runOnUiThread(new Runnable() {
+							@Override
+							public void run() {Toast.makeText(ControllerActivity.this, "Connected to: " + mDevice.getName(), Toast.LENGTH_SHORT).show();}
+						});
 						mDeviceAddress = mDevice.getAddress();
 						mBluetoothLeService.connect(mDeviceAddress);
 						scanFlag = true;
@@ -291,7 +297,7 @@ public class ControllerActivity extends Activity {
 								Toast toast = Toast
 										.makeText(
 												ControllerActivity.this,
-												"Couldn't search Ble Shield device!",
+												"Couldn't connect to Arduino. Try again.",
 												Toast.LENGTH_SHORT);
 								toast.setGravity(0, 0, Gravity.CENTER);
 								toast.show();
