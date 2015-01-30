@@ -1,10 +1,12 @@
 package com.redbear.simplecontrols;
 
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -13,6 +15,7 @@ import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -88,8 +91,8 @@ public class ControllerActivity extends Activity {
 
 				getGattService(mBluetoothLeService.getSupportedGattService());
 			} else if (RBLService.ACTION_DATA_AVAILABLE.equals(action)) {
-				//data = intent.getByteArrayExtra(RBLService.EXTRA_DATA);
-				//readAnalogInValue(data);
+				data = intent.getByteArrayExtra(RBLService.EXTRA_DATA);
+				Log.d("btData", String.valueOf(data));
 			} else if (RBLService.ACTION_GATT_RSSI.equals(action)) {
 				//displayData(intent.getStringExtra(RBLService.EXTRA_DATA));
 			}
@@ -131,6 +134,7 @@ public class ControllerActivity extends Activity {
 
 		Intent gattServiceIntent = new Intent(ControllerActivity.this,
 				RBLService.class);
+		
 		bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 	}
 	
@@ -165,7 +169,7 @@ public class ControllerActivity extends Activity {
 			return true;
 		}
 		else if (id == R.id.connect) {
-			connect();
+			scanLeDevice();
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
@@ -245,10 +249,34 @@ public class ControllerActivity extends Activity {
 				}
 
 				mBluetoothAdapter.stopLeScan(mLeScanCallback);
+				
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						String[] arduinoNames = new String[availableArduinos.size()];
+						for(int i = 0; i < availableArduinos.size(); i++) 
+							arduinoNames[i] = availableArduinos.get(i).getName();
+						if(availableArduinos.size() > 0) {
+						    AlertDialog.Builder builder = new AlertDialog.Builder(ControllerActivity.this);
+						    builder.setTitle("Choose a Device")
+						           .setItems(arduinoNames, new DialogInterface.OnClickListener() {
+						               public void onClick(DialogInterface dialog, int which) {
+						            	   mDevice = availableArduinos.get(which);
+						            	   connect();
+						           }
+						    });
+						    builder.create().show();
+						}
+						else {
+							Toast.makeText(ControllerActivity.this, "No devices found", Toast.LENGTH_SHORT).show();
+						}
+					}
+				});
 			}
 		}.start();
 	}
-
+	private ArrayList<BluetoothDevice> availableArduinos = new ArrayList<BluetoothDevice>();
+	
 	private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
 
 		@Override
@@ -267,7 +295,7 @@ public class ControllerActivity extends Activity {
 					if (stringToUuidString(serviceUuid).equals(
 							RBLGattAttributes.BLE_SHIELD_SERVICE
 									.toUpperCase(Locale.ENGLISH))) {
-						mDevice = device;
+						availableArduinos.add(device);
 					}
 				}
 			});
@@ -276,47 +304,63 @@ public class ControllerActivity extends Activity {
 	
 	private void connect() {
 		if (scanFlag == false) {
-			scanLeDevice();
-
-			Timer mTimer = new Timer();
-			mTimer.schedule(new TimerTask() {
-
-				@Override
-				public void run() {
-					if (mDevice != null) {
-						runOnUiThread(new Runnable() {
-							@Override
-							public void run() {Toast.makeText(ControllerActivity.this, "Connected to: " + mDevice.getName(), Toast.LENGTH_SHORT).show();}
-						});
-						mDeviceAddress = mDevice.getAddress();
-						mBluetoothLeService.connect(mDeviceAddress);
-						scanFlag = true;
-					} else {
-						runOnUiThread(new Runnable() {
-							public void run() {
-								Toast toast = Toast
-										.makeText(
-												ControllerActivity.this,
-												"Couldn't connect to Arduino. Try again.",
-												Toast.LENGTH_SHORT);
-								toast.setGravity(0, 0, Gravity.CENTER);
-								toast.show();
-							}
-						});
-					}
-				}
-			}, SCAN_PERIOD);
-		}
-
-		System.out.println(connState);
-		if (connState == false) {
-			mBluetoothLeService.connect(mDeviceAddress);
-		} else {
-			mBluetoothLeService.disconnect();
-			mBluetoothLeService.close();
-			disableButtons();
+			if (mDevice != null) {
+				Toast.makeText(ControllerActivity.this, "Connected to: " + mDevice.getName(), Toast.LENGTH_SHORT).show();
+				mDeviceAddress = mDevice.getAddress();
+				mBluetoothLeService.connect(mDeviceAddress);
+				scanFlag = true;
+			} else {
+				Toast toast = Toast.makeText(ControllerActivity.this,"Couldn't connect to Arduino. Try again.",Toast.LENGTH_SHORT);
+				toast.show();
+			}
 		}
 	}
+	
+//	private void connect() {
+//		if (scanFlag == false) {
+//			scanLeDevice();
+//
+//			Timer mTimer = new Timer();
+//			mTimer.schedule(new TimerTask() {
+//
+//				@Override
+//				public void run() {
+//					
+//					
+//					if (mDevice != null) {
+//						runOnUiThread(new Runnable() {
+//							@Override
+//							public void run() {Toast.makeText(ControllerActivity.this, "Connected to: " + mDevice.getName(), Toast.LENGTH_SHORT).show();}
+//						});
+//						mDeviceAddress = mDevice.getAddress();
+//						mBluetoothLeService.connect(mDeviceAddress);
+//						scanFlag = true;
+//					} else {
+//						runOnUiThread(new Runnable() {
+//							public void run() {
+//								Toast toast = Toast
+//										.makeText(
+//												ControllerActivity.this,
+//												"Couldn't connect to Arduino. Try again.",
+//												Toast.LENGTH_SHORT);
+//								toast.setGravity(0, 0, Gravity.CENTER);
+//								toast.show();
+//							}
+//						});
+//					}
+//				}
+//			}, SCAN_PERIOD);
+//		}
+//
+//		System.out.println(connState);
+//		if (connState == false) {
+//			mBluetoothLeService.connect(mDeviceAddress);
+//		} else {
+//			mBluetoothLeService.disconnect();
+//			mBluetoothLeService.close();
+//			disableButtons();
+//		}
+//	}
 	
 	private String bytesToHex(byte[] bytes) {
 		char[] hexChars = new char[bytes.length * 2];

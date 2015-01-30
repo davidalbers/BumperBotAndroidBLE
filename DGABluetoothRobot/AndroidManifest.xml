@@ -37,7 +37,9 @@
 
         <activity
             android:name="com.redbear.simplecontrols.ControllerActivity"
-            android:label="@string/title_activity_controller" >
+            android:label="@string/title_activity_controller" 
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
