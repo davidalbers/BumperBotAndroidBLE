@@ -23,6 +23,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.DragEvent;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,15 +31,17 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Toast;
 
 public class ControllerActivity extends Activity {
 	private final static String TAG = "DGABluetoothRobot.Controller";
-	
+
 	private Button leftButton;
 	private Button upButton;
 	private Button rightButton;
-	
+
 	private BluetoothGattCharacteristic characteristicTx = null;
 	private RBLService mBluetoothLeService;
 	private BluetoothAdapter mBluetoothAdapter;
@@ -54,8 +57,8 @@ public class ControllerActivity extends Activity {
 	private static final long SCAN_PERIOD = 2000;
 
 	final private static char[] hexArray = { '0', '1', '2', '3', '4', '5', '6',
-			'7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-	
+		'7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
 		@Override
@@ -98,26 +101,26 @@ public class ControllerActivity extends Activity {
 			}
 		}
 	};
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_controller);
 		leftButton = ((Button)findViewById(R.id.left_button));
-		upButton = ((Button)findViewById(R.id.up_button));
+//		upButton = ((Button)findViewById(R.id.up_button));
 		rightButton = ((Button)findViewById(R.id.right_button));
-	
+
 		//A normal OnClickListener will not do because for this app,
 		//the user will touch down and hold the button while they want the robot to move
 		//So use a touch listener which will listen for touchDown and touchUp
 		leftButton.setOnTouchListener(buttonTouchListener);
-		upButton.setOnTouchListener(buttonTouchListener);
+//		upButton.setOnTouchListener(buttonTouchListener);
 		rightButton.setOnTouchListener(buttonTouchListener);
-		
+
 		if (!getPackageManager().hasSystemFeature(
 				PackageManager.FEATURE_BLUETOOTH_LE)) {
 			Toast.makeText(this, "Ble not supported", Toast.LENGTH_SHORT)
-					.show();
+			.show();
 			finish();
 		}
 
@@ -125,19 +128,40 @@ public class ControllerActivity extends Activity {
 		mBluetoothAdapter = mBluetoothManager.getAdapter();
 		if (mBluetoothAdapter == null) {
 			Toast.makeText(this, "Ble not supported", Toast.LENGTH_SHORT)
-					.show();
+			.show();
 			finish();
 			return;
 		}
-		
-		disableButtons();
+//		((SeekBar)findViewById(R.id.seekBar)).setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+//			
+//			@Override
+//			public void onStopTrackingTouch(SeekBar seekBar) {
+//				int progress = seekBar.getProgress();
+//				characteristicTx.setValue(new byte[] {0x01,(byte)progress});
+//				mBluetoothLeService.writeCharacteristic(characteristicTx);
+//				Toast.makeText(getBaseContext(), "speed " + progress, Toast.LENGTH_SHORT).show();
+//			}
+//			
+//			@Override
+//			public void onStartTrackingTouch(SeekBar seekBar) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//			
+//			@Override
+//			public void onProgressChanged(SeekBar seekBar, int progress,
+//					boolean fromUser) {
+//				
+//			}
+//		});
+		//disableButtons();
 
 		Intent gattServiceIntent = new Intent(ControllerActivity.this,
 				RBLService.class);
-		
+
 		bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 	}
-	
+
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -174,7 +198,7 @@ public class ControllerActivity extends Activity {
 		}
 		return super.onOptionsItemSelected(item);
 	}
-	
+
 	@Override
 	protected void onStop() {
 		super.onStop();
@@ -203,7 +227,7 @@ public class ControllerActivity extends Activity {
 
 		super.onActivityResult(requestCode, resultCode, data);
 	}
-	
+
 	private void getGattService(BluetoothGattService gattService) {
 		if (gattService == null)
 			return;
@@ -249,7 +273,7 @@ public class ControllerActivity extends Activity {
 				}
 
 				mBluetoothAdapter.stopLeScan(mLeScanCallback);
-				
+
 				runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
@@ -257,15 +281,15 @@ public class ControllerActivity extends Activity {
 						for(int i = 0; i < availableArduinos.size(); i++) 
 							arduinoNames[i] = availableArduinos.get(i).getName();
 						if(availableArduinos.size() > 0) {
-						    AlertDialog.Builder builder = new AlertDialog.Builder(ControllerActivity.this);
-						    builder.setTitle("Choose a Device")
-						           .setItems(arduinoNames, new DialogInterface.OnClickListener() {
-						               public void onClick(DialogInterface dialog, int which) {
-						            	   mDevice = availableArduinos.get(which);
-						            	   connect();
-						           }
-						    });
-						    builder.create().show();
+							AlertDialog.Builder builder = new AlertDialog.Builder(ControllerActivity.this);
+							builder.setTitle("Choose a Device")
+							.setItems(arduinoNames, new DialogInterface.OnClickListener() {
+								public void onClick(DialogInterface dialog, int which) {
+									mDevice = availableArduinos.get(which);
+									connect();
+								}
+							});
+							builder.create().show();
 						}
 						else {
 							Toast.makeText(ControllerActivity.this, "No devices found", Toast.LENGTH_SHORT).show();
@@ -276,7 +300,7 @@ public class ControllerActivity extends Activity {
 		}.start();
 	}
 	private ArrayList<BluetoothDevice> availableArduinos = new ArrayList<BluetoothDevice>();
-	
+
 	private BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
 
 		@Override
@@ -294,14 +318,14 @@ public class ControllerActivity extends Activity {
 					serviceUuid = bytesToHex(serviceUuidBytes);
 					if (stringToUuidString(serviceUuid).equals(
 							RBLGattAttributes.BLE_SHIELD_SERVICE
-									.toUpperCase(Locale.ENGLISH))) {
+							.toUpperCase(Locale.ENGLISH))) {
 						availableArduinos.add(device);
 					}
 				}
 			});
 		}
 	};
-	
+
 	private void connect() {
 		if (scanFlag == false) {
 			if (mDevice != null) {
@@ -315,53 +339,53 @@ public class ControllerActivity extends Activity {
 			}
 		}
 	}
-	
-//	private void connect() {
-//		if (scanFlag == false) {
-//			scanLeDevice();
-//
-//			Timer mTimer = new Timer();
-//			mTimer.schedule(new TimerTask() {
-//
-//				@Override
-//				public void run() {
-//					
-//					
-//					if (mDevice != null) {
-//						runOnUiThread(new Runnable() {
-//							@Override
-//							public void run() {Toast.makeText(ControllerActivity.this, "Connected to: " + mDevice.getName(), Toast.LENGTH_SHORT).show();}
-//						});
-//						mDeviceAddress = mDevice.getAddress();
-//						mBluetoothLeService.connect(mDeviceAddress);
-//						scanFlag = true;
-//					} else {
-//						runOnUiThread(new Runnable() {
-//							public void run() {
-//								Toast toast = Toast
-//										.makeText(
-//												ControllerActivity.this,
-//												"Couldn't connect to Arduino. Try again.",
-//												Toast.LENGTH_SHORT);
-//								toast.setGravity(0, 0, Gravity.CENTER);
-//								toast.show();
-//							}
-//						});
-//					}
-//				}
-//			}, SCAN_PERIOD);
-//		}
-//
-//		System.out.println(connState);
-//		if (connState == false) {
-//			mBluetoothLeService.connect(mDeviceAddress);
-//		} else {
-//			mBluetoothLeService.disconnect();
-//			mBluetoothLeService.close();
-//			disableButtons();
-//		}
-//	}
-	
+
+	//	private void connect() {
+	//		if (scanFlag == false) {
+	//			scanLeDevice();
+	//
+	//			Timer mTimer = new Timer();
+	//			mTimer.schedule(new TimerTask() {
+	//
+	//				@Override
+	//				public void run() {
+	//					
+	//					
+	//					if (mDevice != null) {
+	//						runOnUiThread(new Runnable() {
+	//							@Override
+	//							public void run() {Toast.makeText(ControllerActivity.this, "Connected to: " + mDevice.getName(), Toast.LENGTH_SHORT).show();}
+	//						});
+	//						mDeviceAddress = mDevice.getAddress();
+	//						mBluetoothLeService.connect(mDeviceAddress);
+	//						scanFlag = true;
+	//					} else {
+	//						runOnUiThread(new Runnable() {
+	//							public void run() {
+	//								Toast toast = Toast
+	//										.makeText(
+	//												ControllerActivity.this,
+	//												"Couldn't connect to Arduino. Try again.",
+	//												Toast.LENGTH_SHORT);
+	//								toast.setGravity(0, 0, Gravity.CENTER);
+	//								toast.show();
+	//							}
+	//						});
+	//					}
+	//				}
+	//			}, SCAN_PERIOD);
+	//		}
+	//
+	//		System.out.println(connState);
+	//		if (connState == false) {
+	//			mBluetoothLeService.connect(mDeviceAddress);
+	//		} else {
+	//			mBluetoothLeService.disconnect();
+	//			mBluetoothLeService.close();
+	//			disableButtons();
+	//		}
+	//	}
+
 	private String bytesToHex(byte[] bytes) {
 		char[] hexChars = new char[bytes.length * 2];
 		int v;
@@ -387,64 +411,67 @@ public class ControllerActivity extends Activity {
 
 		return newString.toString();
 	}
-	
+
 	private void disableButtons() {
 		flag = false;
 		connState = false;
-		
+
 		leftButton.setEnabled(false);
 		rightButton.setEnabled(false);
-		upButton.setEnabled(false);
+//		upButton.setEnabled(false);
 	}
-	
+
 	private void enableButtons() {
 		flag = true;
 		connState = true;
-		
+
 		leftButton.setEnabled(true);
 		rightButton.setEnabled(true);
-		upButton.setEnabled(true);
+//		upButton.setEnabled(true);
 	}
-	
+
 	OnTouchListener buttonTouchListener = new OnTouchListener() {
-		
+
 		@Override
 		public boolean onTouch(View v, MotionEvent event) {
-			if(v.equals(leftButton)) {
-				if(event.getAction() == MotionEvent.ACTION_DOWN) {
-					//User just pressed left button
-					//you won't know they lifted up until ACTION_UP is called
-					characteristicTx.setValue(new byte[] {0x01});
-					mBluetoothLeService.writeCharacteristic(characteristicTx);
+			if(scanFlag) {
+				if(v.equals(leftButton)) {
+					if(event.getAction() == MotionEvent.ACTION_DOWN) {
+						//User just pressed left button
+						//you won't know they lifted up until ACTION_UP is called
+						characteristicTx.setValue(new byte[] {0x01});
+						mBluetoothLeService.writeCharacteristic(characteristicTx);
+					}
+					else if(event.getAction() == MotionEvent.ACTION_UP) {
+						//User just lifted up from button
+						//you probably want to do something like send a "clear" message
+					}
 				}
-				else if(event.getAction() == MotionEvent.ACTION_UP) {
-					//User just lifted up from button
-					//you probably want to do something like send a "clear" message
-				}
-			}
-			else if(v.equals(upButton)) {
-				if(event.getAction() == MotionEvent.ACTION_DOWN) {
-					//User just pressed up button
-					characteristicTx.setValue(new byte[] {0x02});
-					mBluetoothLeService.writeCharacteristic(characteristicTx);
-				}
-				else if(event.getAction() == MotionEvent.ACTION_UP) {
-					//User just lifted up from button
-					//you probably want to do something like send a "clear" message
+				else if(v.equals(upButton)) {
+					if(event.getAction() == MotionEvent.ACTION_DOWN) {
+						//User just pressed up button
+						characteristicTx.setValue(new byte[] {0x02});
+						mBluetoothLeService.writeCharacteristic(characteristicTx);
+					}
+					else if(event.getAction() == MotionEvent.ACTION_UP) {
+						//User just lifted up from button
+						//you probably want to do something like send a "clear" message
 
+					}
 				}
-			}
-			else if(v.equals(rightButton)) {
-				if(event.getAction() == MotionEvent.ACTION_DOWN) {
-					//User just pressed right button
-					characteristicTx.setValue(new byte[] {0x03});
-					mBluetoothLeService.writeCharacteristic(characteristicTx);
-				}
-				else if(event.getAction() == MotionEvent.ACTION_UP) {
-					//User just lifted up from button
-					//you probably want to do something like send a "clear" message
+				else if(v.equals(rightButton)) {
+					if(event.getAction() == MotionEvent.ACTION_DOWN) {
+						//User just pressed right button
+						characteristicTx.setValue(new byte[] {0x03});
+						mBluetoothLeService.writeCharacteristic(characteristicTx);
+					}
+					else if(event.getAction() == MotionEvent.ACTION_UP) {
+						//User just lifted up from button
+						//you probably want to do something like send a "clear" message
 
+					}
 				}
+				
 			}
 			return false;
 		}

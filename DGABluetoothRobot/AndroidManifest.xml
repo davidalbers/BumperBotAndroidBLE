@@ -24,19 +24,30 @@
             android:name="com.redbear.simplecontrols.SimpleControls"
             android:label="@string/app_name"
             android:screenOrientation="portrait" >
-<!--             <intent-filter>
+ <!--          <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter> -->
+            </intent-filter>  -->
         </activity>
 
         <service
             android:name="com.redbear.simplecontrols.RBLService"
             android:enabled="true" />
 
-        <activity
+<!--         <activity
             android:name="com.redbear.simplecontrols.ControllerActivity"
+            android:label="@string/title_activity_controller" 
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" /> 
+            </intent-filter>
+        </activity> -->
+	<activity
+            android:name="com.redbear.simplecontrols.BumperBotController"
             android:label="@string/title_activity_controller" 
             android:screenOrientation="landscape"
             android:configChanges="orientation|keyboardHidden">
@@ -46,6 +57,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-    </application>
+    </application> 
 
 </manifest>
