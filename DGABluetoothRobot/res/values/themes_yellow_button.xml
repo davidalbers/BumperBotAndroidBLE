@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Generated with http://android-holo-colors.com -->
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <style name="Yellow_Button" parent="@style/_Yellow_Button"/>
+
+  <style name="_Yellow_Button" parent="android:Theme.Holo.Light">
+
+    <item name="android:buttonStyle">@style/ButtonYellow_Button</item>
+
+    <item name="android:imageButtonStyle">@style/ImageButtonYellow_Button</item>
+
+  </style>
+
+</resources>
