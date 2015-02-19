@@ -5,7 +5,7 @@
 
   <style name="red_button" parent="@style/_red_button"/>
 
-  <style name="_red_button" parent="android:Theme.Light">
+  <style name="_red_button" parent="android:Theme.Holo.Light">
 
     <item name="android:buttonStyle">@style/Buttonred_button</item>
 

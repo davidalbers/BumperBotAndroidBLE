@@ -52,7 +52,7 @@
 		    android:layout_height="fill_parent"
 		    android:text="@string/left_control" 
 		    android:layout_weight=".5" 
-		    android:background="@drawable/yellow_button_btn_default_holo_light"/>/>
+		    android:background="@drawable/yellow_button_btn_default_holo_light"/> 
 
 		<Button
 	        android:id="@+id/right_button"

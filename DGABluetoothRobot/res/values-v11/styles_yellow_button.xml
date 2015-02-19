@@ -3,14 +3,11 @@
 <!-- Generated with http://android-holo-colors.com -->
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
-  <style name="Buttonyellow_button" parent="android:Widget.Button">
+  <style name="Buttonyellow_button" parent="android:Widget.Holo.Light.Button">
 	  <item name="android:background">@drawable/yellow_button_btn_default_holo_light</item>
-	  <item name="android:minHeight">48dip</item>
-	  <item name="android:minWidth">64dip</item>
-	  <item name="android:textColor">#000000</item>
   </style>
 
-  <style name="ImageButtonyellow_button" parent="android:Widget.ImageButton">
+  <style name="ImageButtonyellow_button" parent="android:Widget.Holo.Light.ImageButton">
 	  <item name="android:background">@drawable/yellow_button_btn_default_holo_light</item>
   </style>
 
