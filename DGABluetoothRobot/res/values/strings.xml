@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">BLE Demo - Simple Controls</string>
+    <string name="app_name">BumperBot</string>
     <string name="action_settings">Settings</string>
     <string name="Rssi">RSSI</string>
     <string name="rssiValue">---</string>
@@ -21,7 +21,7 @@
     <string name="AIText">----</string>
     <string name="connect">Connect</string>
     <string name="loading">Refreshing......</string>
-    <string name="title_activity_controller">Controller</string>
+    <string name="title_activity_controller">BumperBot</string>
     <string name="hello_world">Hello world!</string>
     <string name="left_control">Left</string>
     <string name="right_control">Right</string>

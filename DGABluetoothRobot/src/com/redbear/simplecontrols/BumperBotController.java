@@ -108,7 +108,7 @@ public class BumperBotController extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+	    
 		setContentView(R.layout.activity_controller);
 		
 		if (!getPackageManager().hasSystemFeature(
@@ -172,6 +172,7 @@ public class BumperBotController extends Activity {
 		Intent gattServiceIntent = new Intent(BumperBotController.this,
 				RBLService.class);
 		bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+		
 	}
 
 	@Override
