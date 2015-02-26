@@ -2,8 +2,6 @@ package com.redbear.simplecontrols;
 
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -20,27 +18,22 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
-import android.view.Window;
 import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.SeekBar;
-import android.widget.SeekBar.OnSeekBarChangeListener;
-import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
-public class BumperBotController extends Activity {
+public class BumperBotController extends Activity implements SensorEventListener{
 	private final static String TAG = BumperBotController.class.getSimpleName();
 
 
@@ -60,6 +53,13 @@ public class BumperBotController extends Activity {
 
 	final private static char[] hexArray = { '0', '1', '2', '3', '4', '5', '6',
 			'7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+	
+	private SensorManager sensorManager;
+	private Sensor sensor;
+	
+	private Button forwardButton;
+	private Button leftButton;
+	private Button rightButton;
 
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -118,7 +118,8 @@ public class BumperBotController extends Activity {
 			finish();
 		}
 
-		((Button)findViewById(R.id.left_button)).setOnTouchListener(new OnTouchListener() {
+		leftButton = (Button)findViewById(R.id.left_button);
+		leftButton.setOnTouchListener(new OnTouchListener() {
 			
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
@@ -133,7 +134,8 @@ public class BumperBotController extends Activity {
 		});
 		
 		
-		((Button)findViewById(R.id.right_button)).setOnTouchListener(new OnTouchListener() {
+		rightButton = (Button)findViewById(R.id.right_button);
+		rightButton.setOnTouchListener(new OnTouchListener() {
 			
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
@@ -147,7 +149,8 @@ public class BumperBotController extends Activity {
 			}
 		});
 		
-		((Button)findViewById(R.id.up_button)).setOnTouchListener(new OnTouchListener() {
+		forwardButton = (Button)findViewById(R.id.up_button);
+		forwardButton.setOnTouchListener(new OnTouchListener() {
 			
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
@@ -160,7 +163,7 @@ public class BumperBotController extends Activity {
 				return false;
 			}
 		});
-		final BluetoothManager mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+		final BluetoothManager mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);        
 		mBluetoothAdapter = mBluetoothManager.getAdapter();
 		if (mBluetoothAdapter == null) {
 			Toast.makeText(this, "Ble not supported", Toast.LENGTH_SHORT)
@@ -168,7 +171,11 @@ public class BumperBotController extends Activity {
 			finish();
 			return;
 		}
-
+		
+		sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+		sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+		sensorManager.registerListener(this, sensor, 100000);
+		
 		Intent gattServiceIntent = new Intent(BumperBotController.this,
 				RBLService.class);
 		bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
@@ -239,23 +246,17 @@ public class BumperBotController extends Activity {
 	private void setButtonEnable() {
 		flag = true;
 		connState = true;
-//
-//		digitalOutBtn.setEnabled(flag);
-//		AnalogInBtn.setEnabled(flag);
-//		servoSeekBar.setEnabled(flag);
-//		PWMSeekBar.setEnabled(flag);
-//		connectBtn.setText("Disconnect");
+		forwardButton.setEnabled(true);
+		leftButton.setEnabled(true);
+		rightButton.setEnabled(true);
 	}
 
 	private void setButtonDisable() {
 		flag = false;
 		connState = false;
-//
-//		digitalOutBtn.setEnabled(flag);
-//		AnalogInBtn.setEnabled(flag);
-//		servoSeekBar.setEnabled(flag);
-//		PWMSeekBar.setEnabled(flag);
-//		connectBtn.setText("Connect");
+		forwardButton.setEnabled(false);
+		leftButton.setEnabled(false);
+		rightButton.setEnabled(false);
 	}
 
 	private void startReadRssi() {
@@ -364,6 +365,10 @@ public class BumperBotController extends Activity {
 					if (stringToUuidString(serviceUuid).equals(
 							RBLGattAttributes.BLE_SHIELD_SERVICE
 							.toUpperCase(Locale.ENGLISH))) {
+						for(BluetoothDevice otherDev : availableArduinos) {
+							if(device.getAddress().equals(otherDev.getAddress()))
+								return;
+						}
 						availableArduinos.add(device);
 					}
 				}
@@ -440,51 +445,79 @@ public class BumperBotController extends Activity {
 	}
 	
 	private void forward() {
-		byte[] buf = new byte[] { (byte) 0x03, (byte) 165, (byte) 0x00 };
+		byte[] buf = new byte[] { (byte) 0x03, (byte) 165, (byte) 20 };
 		Log.d("Wheel", "left 165");
-		characteristicTx.setValue(buf);
-		mBluetoothLeService.writeCharacteristic(characteristicTx);
-		
-		buf[0] = 0x05;
-		buf[1] = 20;
-		Log.d("Wheel", "right 20");
 		characteristicTx.setValue(buf);
 		mBluetoothLeService.writeCharacteristic(characteristicTx);
 	}
 	
 	private void left() {
-		byte[] buf = new byte[] { (byte) 0x03, (byte) 20, (byte) 0x00 };
+		byte[] buf = new byte[] { (byte) 0x03, (byte) 20, (byte) 20 };
 		Log.d("Wheel", "left 20");
 		characteristicTx.setValue(buf);
 		mBluetoothLeService.writeCharacteristic(characteristicTx);
-		
-		buf[0] = 0x05;
-		Log.d("Wheel", "right 20");
-		characteristicTx.setValue(buf);
-		mBluetoothLeService.writeCharacteristic(characteristicTx);
+
 	}
 	
 	private void right() {
-		byte[] buf = new byte[] { (byte) 0x03, (byte) 165, (byte) 0x00 };
+		byte[] buf = new byte[] { (byte) 0x03, (byte) 165, (byte) 165 };
 		Log.d("Wheel", "left 165");
-		characteristicTx.setValue(buf);
-		mBluetoothLeService.writeCharacteristic(characteristicTx);
-		
-		buf[0] = 0x05;
-		Log.d("Wheel", "right 165");
 		characteristicTx.setValue(buf);
 		mBluetoothLeService.writeCharacteristic(characteristicTx);
 	}
 	
 	private void stop() {
-		byte[] buf = new byte[] { (byte) 0x03, (byte) 95, (byte) 0x00 };
+		byte[] buf = new byte[] { (byte) 0x03, (byte) 95, (byte) 95 };
 		Log.d("Wheel", "left 0");
 		characteristicTx.setValue(buf);
 		mBluetoothLeService.writeCharacteristic(characteristicTx);
 		
-		buf[0] = 0x05;
-		Log.d("Wheel", "right 0");
-		characteristicTx.setValue(buf);
-		mBluetoothLeService.writeCharacteristic(characteristicTx);
+	}
+
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		//right 165
+		//left 20
+		//forward l 165, r 20
+		//horizontal 0
+		//tilt left -
+		//tilt right +
+		if(((Button)findViewById(R.id.up_button)).isPressed()) {
+			if(event.values[1] > 1) {
+				//turning right
+				double multiplier = Math.min(Math.abs(event.values[1]), 9.8) / 9.8;
+				double speed = 70 * Math.pow(multiplier, 1.0/3);
+				int leftSpeed = (int)(165);
+				int rightSpeed = (int) (20 + speed);
+				byte[] buf = new byte[] { (byte) 0x03, (byte) leftSpeed, (byte) rightSpeed };
+				Log.d("Wheel", "left " + leftSpeed);
+				characteristicTx.setValue(buf);
+				mBluetoothLeService.writeCharacteristic(characteristicTx);
+			}
+			else if (event.values[1] < -1) {
+				double multiplier = Math.min(Math.abs(event.values[1]), 9.8) / 9.8;
+				double speed = 70 * Math.pow(multiplier, 1.0/3);
+				int leftSpeed = (int)(165 - speed);
+				int rightSpeed = (int) (20);
+				byte[] buf = new byte[] { (byte) 0x03, (byte) leftSpeed, (byte) rightSpeed };
+				Log.d("Wheel", "left " + leftSpeed);
+				characteristicTx.setValue(buf);
+				mBluetoothLeService.writeCharacteristic(characteristicTx);
+				
+			}
+			else {
+				byte[] buf = new byte[] { (byte) 0x03, (byte) 165, (byte) 20 };
+				Log.d("Wheel", "left " + 165);
+				characteristicTx.setValue(buf);
+				mBluetoothLeService.writeCharacteristic(characteristicTx);
+				
+			}
+		}
+	}
+
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
+		// TODO Auto-generated method stub
+		
 	}
 }
