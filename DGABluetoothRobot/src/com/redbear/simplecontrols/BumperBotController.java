@@ -31,6 +31,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
 import android.widget.Toast;
 
 public class BumperBotController extends Activity implements SensorEventListener{
@@ -60,6 +62,7 @@ public class BumperBotController extends Activity implements SensorEventListener
 	private Button forwardButton;
 	private Button leftButton;
 	private Button rightButton;
+	private final int STEERING_SENSITIVITY = 2;
 
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -88,7 +91,6 @@ public class BumperBotController extends Activity implements SensorEventListener
 			if (RBLService.ACTION_GATT_DISCONNECTED.equals(action)) {
 				Toast.makeText(getApplicationContext(), "Disconnected",
 						Toast.LENGTH_SHORT).show();
-				setButtonDisable();
 			} else if (RBLService.ACTION_GATT_SERVICES_DISCOVERED
 					.equals(action)) {
 				Toast.makeText(getApplicationContext(), "Connected",
@@ -203,6 +205,30 @@ public class BumperBotController extends Activity implements SensorEventListener
 			scanLeDevice();
 			return true;
 		}
+		else if (id == R.id.use_buttons){
+			LinearLayout topRow = (LinearLayout)findViewById(R.id.top_row);
+			LayoutParams topParams = (LayoutParams) topRow.getLayoutParams();
+			topParams.weight = .5f;
+			topRow.setLayoutParams(topParams);
+			LinearLayout bottomRow = (LinearLayout)findViewById(R.id.bottom_row);
+			LayoutParams bottomParams = (LayoutParams) bottomRow.getLayoutParams();
+			bottomParams.weight = .5f;
+			bottomRow.setLayoutParams(bottomParams);
+			bottomRow.setVisibility(View.VISIBLE);
+			return true;
+		}
+		else if (id == R.id.steering_wheel_mode) {
+			LinearLayout topRow = (LinearLayout)findViewById(R.id.top_row);
+			LayoutParams topParams = (LayoutParams) topRow.getLayoutParams();
+			topParams.weight = 1;
+			topRow.setLayoutParams(topParams);
+			LinearLayout bottomRow = (LinearLayout)findViewById(R.id.bottom_row);
+			LayoutParams bottomParams = (LayoutParams) bottomRow.getLayoutParams();
+			bottomParams.weight = 0;
+			bottomRow.setLayoutParams(bottomParams);
+			bottomRow.setVisibility(View.INVISIBLE);
+			return true;
+		}
 		return super.onOptionsItemSelected(item);
 	}
 	
@@ -243,22 +269,6 @@ public class BumperBotController extends Activity implements SensorEventListener
 //		}
 	}
 
-	private void setButtonEnable() {
-		flag = true;
-		connState = true;
-		forwardButton.setEnabled(true);
-		leftButton.setEnabled(true);
-		rightButton.setEnabled(true);
-	}
-
-	private void setButtonDisable() {
-		flag = false;
-		connState = false;
-		forwardButton.setEnabled(false);
-		leftButton.setEnabled(false);
-		rightButton.setEnabled(false);
-	}
-
 	private void startReadRssi() {
 		new Thread() {
 			public void run() {
@@ -279,7 +289,6 @@ public class BumperBotController extends Activity implements SensorEventListener
 		if (gattService == null)
 			return;
 
-		setButtonEnable();
 		startReadRssi();
 
 		characteristicTx = gattService
@@ -445,33 +454,39 @@ public class BumperBotController extends Activity implements SensorEventListener
 	}
 	
 	private void forward() {
-		byte[] buf = new byte[] { (byte) 0x03, (byte) 165, (byte) 20 };
-		Log.d("Wheel", "left 165");
-		characteristicTx.setValue(buf);
-		mBluetoothLeService.writeCharacteristic(characteristicTx);
+		if(characteristicTx != null) {
+			byte[] buf = new byte[] { (byte) 0x03, (byte) 165, (byte) 20 };
+			Log.d("Wheel", "left 165");
+			characteristicTx.setValue(buf);
+			mBluetoothLeService.writeCharacteristic(characteristicTx);
+		}
 	}
 	
 	private void left() {
-		byte[] buf = new byte[] { (byte) 0x03, (byte) 20, (byte) 20 };
-		Log.d("Wheel", "left 20");
-		characteristicTx.setValue(buf);
-		mBluetoothLeService.writeCharacteristic(characteristicTx);
-
+		if(characteristicTx != null) {
+			byte[] buf = new byte[] { (byte) 0x03, (byte) 20, (byte) 20 };
+			Log.d("Wheel", "left 20");
+			characteristicTx.setValue(buf);
+			mBluetoothLeService.writeCharacteristic(characteristicTx);
+		}
 	}
 	
 	private void right() {
-		byte[] buf = new byte[] { (byte) 0x03, (byte) 165, (byte) 165 };
-		Log.d("Wheel", "left 165");
-		characteristicTx.setValue(buf);
-		mBluetoothLeService.writeCharacteristic(characteristicTx);
+		if(characteristicTx != null) {
+			byte[] buf = new byte[] { (byte) 0x03, (byte) 165, (byte) 165 };
+			Log.d("Wheel", "left 165");
+			characteristicTx.setValue(buf);
+			mBluetoothLeService.writeCharacteristic(characteristicTx);
+		}
 	}
 	
 	private void stop() {
-		byte[] buf = new byte[] { (byte) 0x03, (byte) 95, (byte) 95 };
-		Log.d("Wheel", "left 0");
-		characteristicTx.setValue(buf);
-		mBluetoothLeService.writeCharacteristic(characteristicTx);
-		
+		if(characteristicTx != null) {
+			byte[] buf = new byte[] { (byte) 0x03, (byte) 95, (byte) 95 };
+			Log.d("Wheel", "left 0");
+			characteristicTx.setValue(buf);
+			mBluetoothLeService.writeCharacteristic(characteristicTx);
+		}
 	}
 
 	@Override
@@ -482,11 +497,11 @@ public class BumperBotController extends Activity implements SensorEventListener
 		//horizontal 0
 		//tilt left -
 		//tilt right +
-		if(((Button)findViewById(R.id.up_button)).isPressed()) {
+		if(((Button)findViewById(R.id.up_button)).isPressed() && characteristicTx != null) {
 			if(event.values[1] > 1) {
 				//turning right
 				double multiplier = Math.min(Math.abs(event.values[1]), 9.8) / 9.8;
-				double speed = 70 * Math.pow(multiplier, 1.0/3);
+				double speed = 70 * Math.pow(multiplier, 1.0/STEERING_SENSITIVITY);
 				int leftSpeed = (int)(165);
 				int rightSpeed = (int) (20 + speed);
 				byte[] buf = new byte[] { (byte) 0x03, (byte) leftSpeed, (byte) rightSpeed };
@@ -496,7 +511,7 @@ public class BumperBotController extends Activity implements SensorEventListener
 			}
 			else if (event.values[1] < -1) {
 				double multiplier = Math.min(Math.abs(event.values[1]), 9.8) / 9.8;
-				double speed = 70 * Math.pow(multiplier, 1.0/3);
+				double speed = 70 * Math.pow(multiplier, 1.0/STEERING_SENSITIVITY);
 				int leftSpeed = (int)(165 - speed);
 				int rightSpeed = (int) (20);
 				byte[] buf = new byte[] { (byte) 0x03, (byte) leftSpeed, (byte) rightSpeed };

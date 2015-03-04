@@ -26,5 +26,7 @@
     <string name="left_control">Left</string>
     <string name="right_control">Right</string>
     <string name="up_control">Up</string>
+    <string name="steering_wheel_mode">Use Steering Wheel</string>
+    <string name="use_buttons">Use Buttons</string>
 
 </resources>
