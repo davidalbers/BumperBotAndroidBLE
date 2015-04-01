@@ -62,7 +62,8 @@ public class BumperBotController extends Activity implements SensorEventListener
 	private Button forwardButton;
 	private Button leftButton;
 	private Button rightButton;
-	private final int STEERING_SENSITIVITY = 2;
+	private final double STEERING_SENSITIVITY = 1.75;
+	private boolean useSteeringWheel = false;
 
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -111,7 +112,7 @@ public class BumperBotController extends Activity implements SensorEventListener
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 	    
-		setContentView(R.layout.activity_controller);
+		setContentView(R.layout.activity_controller_with_reverse);
 		
 		if (!getPackageManager().hasSystemFeature(
 				PackageManager.FEATURE_BLUETOOTH_LE)) {
@@ -120,16 +121,22 @@ public class BumperBotController extends Activity implements SensorEventListener
 			finish();
 		}
 
-		leftButton = (Button)findViewById(R.id.left_button);
+/*		leftButton = (Button)findViewById(R.id.left_button);
 		leftButton.setOnTouchListener(new OnTouchListener() {
 			
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
 				if(event.getAction() == MotionEvent.ACTION_DOWN) {
-					left();
+					if(forwardButton.isPressed())
+						slightLeft();
+					else 
+						left();
 				}
 				else if(event.getAction() == MotionEvent.ACTION_UP) {
-					stop();
+					if(!forwardButton.isPressed())
+						stop();
+					else
+						forward();
 				}
 				return false;
 			}
@@ -142,14 +149,20 @@ public class BumperBotController extends Activity implements SensorEventListener
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
 				if(event.getAction() == MotionEvent.ACTION_DOWN) {
-					right();
+					if(forwardButton.isPressed())
+						slightRight();
+					else
+						right();
 				}
 				else if(event.getAction() == MotionEvent.ACTION_UP) {
-					stop();
+					if(!forwardButton.isPressed())
+						stop();
+					else 
+						forward();
 				}
 				return false;
 			}
-		});
+		});*/
 		
 		forwardButton = (Button)findViewById(R.id.up_button);
 		forwardButton.setOnTouchListener(new OnTouchListener() {
@@ -157,14 +170,45 @@ public class BumperBotController extends Activity implements SensorEventListener
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
 				if(event.getAction() == MotionEvent.ACTION_DOWN) {
-					forward();
+					if(!leftButton.isPressed() && !rightButton.isPressed())
+						forward();
 				}
 				else if(event.getAction() == MotionEvent.ACTION_UP) {
-					stop();
+					if(!leftButton.isPressed() && !rightButton.isPressed())
+						stop();
 				}
 				return false;
 			}
 		});
+		
+//		((Button)findViewById(R.id.down_button)).setOnTouchListener(new OnTouchListener() {
+//			
+//			@Override
+//			public boolean onTouch(View v, MotionEvent event) {
+//				if(event.getAction() == MotionEvent.ACTION_DOWN) {
+//					backward();
+//				}
+//				else if(event.getAction() == MotionEvent.ACTION_UP) {
+//					stop();
+//				}
+//				return false;
+//			}
+//		});
+//		
+//		((Button)findViewById(R.id.beep_button)).setOnTouchListener(new OnTouchListener() {
+//			
+//			@Override
+//			public boolean onTouch(View v, MotionEvent event) {
+//				if(event.getAction() == MotionEvent.ACTION_DOWN) {
+//					beep();
+//				}
+//				else if(event.getAction() == MotionEvent.ACTION_UP) {
+//					noBeep();
+//				}
+//				return false;
+//			}
+//		});
+		
 		final BluetoothManager mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);        
 		mBluetoothAdapter = mBluetoothManager.getAdapter();
 		if (mBluetoothAdapter == null) {
@@ -215,6 +259,7 @@ public class BumperBotController extends Activity implements SensorEventListener
 			bottomParams.weight = .5f;
 			bottomRow.setLayoutParams(bottomParams);
 			bottomRow.setVisibility(View.VISIBLE);
+			useSteeringWheel = false;
 			return true;
 		}
 		else if (id == R.id.steering_wheel_mode) {
@@ -227,6 +272,7 @@ public class BumperBotController extends Activity implements SensorEventListener
 			bottomParams.weight = 0;
 			bottomRow.setLayoutParams(bottomParams);
 			bottomRow.setVisibility(View.INVISIBLE);
+			useSteeringWheel = true;
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
@@ -462,9 +508,18 @@ public class BumperBotController extends Activity implements SensorEventListener
 		}
 	}
 	
+	private void backward() {
+		if(characteristicTx != null) {
+			byte[] buf = new byte[] { (byte) 0x03, (byte) 20, (byte) 165 };
+			Log.d("Wheel", "left 165");
+			characteristicTx.setValue(buf);
+			mBluetoothLeService.writeCharacteristic(characteristicTx);
+		}
+	}
+	
 	private void left() {
 		if(characteristicTx != null) {
-			byte[] buf = new byte[] { (byte) 0x03, (byte) 20, (byte) 20 };
+			byte[] buf = new byte[] { (byte) 0x03, (byte) 75, (byte) 75 };
 			Log.d("Wheel", "left 20");
 			characteristicTx.setValue(buf);
 			mBluetoothLeService.writeCharacteristic(characteristicTx);
@@ -473,7 +528,25 @@ public class BumperBotController extends Activity implements SensorEventListener
 	
 	private void right() {
 		if(characteristicTx != null) {
-			byte[] buf = new byte[] { (byte) 0x03, (byte) 165, (byte) 165 };
+			byte[] buf = new byte[] { (byte) 0x03, (byte) 110, (byte) 110 };
+			Log.d("Wheel", "left 165");
+			characteristicTx.setValue(buf);
+			mBluetoothLeService.writeCharacteristic(characteristicTx);
+		}
+	}
+	
+	private void slightRight() {
+		if(characteristicTx != null) {
+			byte[] buf = new byte[] { (byte) 0x03, (byte) 165, (byte) 75 };
+			Log.d("Wheel", "left 165");
+			characteristicTx.setValue(buf);
+			mBluetoothLeService.writeCharacteristic(characteristicTx);
+		}
+	}
+	
+	private void slightLeft() {
+		if(characteristicTx != null) {
+			byte[] buf = new byte[] { (byte) 0x03, (byte) 110, (byte) 20 };
 			Log.d("Wheel", "left 165");
 			characteristicTx.setValue(buf);
 			mBluetoothLeService.writeCharacteristic(characteristicTx);
@@ -488,6 +561,24 @@ public class BumperBotController extends Activity implements SensorEventListener
 			mBluetoothLeService.writeCharacteristic(characteristicTx);
 		}
 	}
+	
+	private void beep() {
+		if(characteristicTx != null) {
+			byte[] buf = new byte[] { (byte) 0x05, (byte) 02, (byte) 0 };
+			Log.d("Beep", "on");
+			characteristicTx.setValue(buf);
+			mBluetoothLeService.writeCharacteristic(characteristicTx);
+		}
+	}
+	
+	private void noBeep() {
+		if(characteristicTx != null) {
+			byte[] buf = new byte[] { (byte) 0x05, (byte) 01, (byte) 0 };
+			Log.d("Beep", "off");
+			characteristicTx.setValue(buf);
+			mBluetoothLeService.writeCharacteristic(characteristicTx);
+		}
+	}
 
 	@Override
 	public void onSensorChanged(SensorEvent event) {
@@ -497,35 +588,37 @@ public class BumperBotController extends Activity implements SensorEventListener
 		//horizontal 0
 		//tilt left -
 		//tilt right +
-		if(((Button)findViewById(R.id.up_button)).isPressed() && characteristicTx != null) {
-			if(event.values[1] > 1) {
-				//turning right
-				double multiplier = Math.min(Math.abs(event.values[1]), 9.8) / 9.8;
-				double speed = 70 * Math.pow(multiplier, 1.0/STEERING_SENSITIVITY);
-				int leftSpeed = (int)(165);
-				int rightSpeed = (int) (20 + speed);
-				byte[] buf = new byte[] { (byte) 0x03, (byte) leftSpeed, (byte) rightSpeed };
-				Log.d("Wheel", "left " + leftSpeed);
-				characteristicTx.setValue(buf);
-				mBluetoothLeService.writeCharacteristic(characteristicTx);
-			}
-			else if (event.values[1] < -1) {
-				double multiplier = Math.min(Math.abs(event.values[1]), 9.8) / 9.8;
-				double speed = 70 * Math.pow(multiplier, 1.0/STEERING_SENSITIVITY);
-				int leftSpeed = (int)(165 - speed);
-				int rightSpeed = (int) (20);
-				byte[] buf = new byte[] { (byte) 0x03, (byte) leftSpeed, (byte) rightSpeed };
-				Log.d("Wheel", "left " + leftSpeed);
-				characteristicTx.setValue(buf);
-				mBluetoothLeService.writeCharacteristic(characteristicTx);
-				
-			}
-			else {
-				byte[] buf = new byte[] { (byte) 0x03, (byte) 165, (byte) 20 };
-				Log.d("Wheel", "left " + 165);
-				characteristicTx.setValue(buf);
-				mBluetoothLeService.writeCharacteristic(characteristicTx);
-				
+		if(useSteeringWheel) {
+			if(((Button)findViewById(R.id.up_button)).isPressed() && characteristicTx != null) {
+				if(event.values[1] > 1) {
+					//turning right
+					double multiplier = Math.min(Math.abs(event.values[1]), 9.8) / 9.8;
+					double speed = 70 * Math.pow(multiplier, 1.0/STEERING_SENSITIVITY);
+					int leftSpeed = (int)(165);
+					int rightSpeed = (int) (20 + speed);
+					byte[] buf = new byte[] { (byte) 0x03, (byte) leftSpeed, (byte) rightSpeed };
+					Log.d("Wheel", "left " + leftSpeed);
+					characteristicTx.setValue(buf);
+					mBluetoothLeService.writeCharacteristic(characteristicTx);
+				}
+				else if (event.values[1] < -1) {
+					double multiplier = Math.min(Math.abs(event.values[1]), 9.8) / 9.8;
+					double speed = 70 * Math.pow(multiplier, 1.0/STEERING_SENSITIVITY);
+					int leftSpeed = (int)(165 - speed);
+					int rightSpeed = (int) (20);
+					byte[] buf = new byte[] { (byte) 0x03, (byte) leftSpeed, (byte) rightSpeed };
+					Log.d("Wheel", "left " + leftSpeed);
+					characteristicTx.setValue(buf);
+					mBluetoothLeService.writeCharacteristic(characteristicTx);
+					
+				}
+				else {
+					byte[] buf = new byte[] { (byte) 0x03, (byte) 165, (byte) 20 };
+					Log.d("Wheel", "left " + 165);
+					characteristicTx.setValue(buf);
+					mBluetoothLeService.writeCharacteristic(characteristicTx);
+					
+				}
 			}
 		}
 	}

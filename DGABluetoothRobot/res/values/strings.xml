@@ -23,10 +23,11 @@
     <string name="loading">Refreshing......</string>
     <string name="title_activity_controller">BumperBot</string>
     <string name="hello_world">Hello world!</string>
-    <string name="left_control">Left</string>
-    <string name="right_control">Right</string>
-    <string name="up_control">Up</string>
+    <string name="left_control">&lt;</string>
+    <string name="right_control">&gt;</string>
+    <string name="up_control">^</string>
     <string name="steering_wheel_mode">Use Steering Wheel</string>
     <string name="use_buttons">Use Buttons</string>
+    <string name="beep">Beep</string>
 
 </resources>
