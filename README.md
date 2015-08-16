@@ -1,6 +1,8 @@
 # DGABluetoothRobot
 An modified version of example code for the RedBear BLE Shield which acts as a simple controller for a robot. 
 Arduino code which should be paired with this project is in DGABluetoothRobotArduino.
+A major issue we've encountered is Bluetooth Low Energy which is used by the Bluetooth shield has a very small range. For now, development has stopped on this project. We're working on the BumperBotAndroid project which does not use BLE.
+This project is still used for reference for its user interface and general bluetooth protocol.
 
 License
 Copyright (c) 2014 RedBearLab
